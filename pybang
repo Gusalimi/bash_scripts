@@ -4,8 +4,8 @@
 
 # The program takes at least one argument
 if [ $# -lt 1 ]; then
-	echo "Usage: pyshab [ FILES ]"
-	return
+	echo "Usage: pybang [ FILES ]"
+	exit
 fi
 
 # If -f, add shebang to every arg and don't check if python file
