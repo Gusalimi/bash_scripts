@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Get the brightness before executing the script and restores it on ^C
+current=$(xrandr --verbose | grep Brightness | awk '{print $2}')
+function reset() {
+	xrandr --output DP-2 --brightness $current 2>/dev/null
+	xrandr --output eDP --brightness $current 2>/dev/null
+	exit
+}
+trap 'reset' SIGINT # ^C
+trap 'reset' SIGTERM # ^kill and killall
+
+# Get the sleep time in the first argument or default it to 0.1
+if [ $# -ne 1 ]; then
+    sleep_time=0.1
+else
+    sleep_time=$1
+fi
+
+# Endlessly jump from -10 to -120 brightness
+while [ 1 ]; do
+    for color in -10 -20 -30 -40 -50 -60 -70 -80 -90 -100 -110 -120; do
+	xrandr --output DP-2 --brightness $color 2>/dev/null
+	xrandr --output eDP --brightness $color 2>/dev/null
+	sleep $sleep_time
+    done
+done

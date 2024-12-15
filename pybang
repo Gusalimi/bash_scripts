@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# ========= Add or update the shebang of python files ========= #
+
+# The program takes at least one argument
+if [ $# -lt 1 ]; then
+	echo "Usage: pyshab [ FILES ]"
+	return
+fi
+
+# If -f, add shebang to every arg and don't check if python file
+force=0
+
+# Take venv python if exists, then search for system python
+if [ -d $(pwd)/.venv ]; then
+	new_shebang="#!$(pwd)/.venv/bin/python"
+else
+	for py in /bin/python3 /usr/bin/python3 /bin/python /usr/bin/python /bin/python2 /usr/bin/python2; do
+		if [ -f $py ]; then
+			new_shebang="#!$py"
+			break
+		fi
+	done
+fi
+echo "New shebang is: $new_shebang"
+
+# Check if -f given
+for arg in "$@"; do
+	if [ "$arg" == "-f" ]; then
+		force=1
+	fi
+done
+
+# Adds/replace the shebang to each argument
+for file in "$@"; do
+	if [ "$file" == "-f" ]; then
+		continue
+	fi
+	if [[ $(echo "$file" | cut -c1-1) == '-' ]]; then
+		echo "Warning: $file: unknown option"
+		continue
+	fi
+
+	if [ -d "$file" ]; then
+		echo "Warning: $file is a directory"
+		continue
+	elif [ ! -f "$file" ]; then
+		echo "Warning: $file does not exist"
+		continue
+	elif [[ $force != 1 && "${file#*.}" != "py" ]]; then
+		echo "Warning: $file is not a .py file"
+		continue
+	fi
+
+	if [[ "$(head -n 1 "$file")" =~ ^#! ]]; then
+		sed -i "1 s|#.*|$new_shebang|" "$file"
+		echo "Changed $file shebang"
+	else
+		content=$(cat "$file")
+		tmp=$(mktemp)
+		echo  "$new_shebang" > "$tmp"
+		echo >> "$tmp"
+		echo -n "$content" >> "$tmp"
+		mv "$tmp" "$file"
+		echo "Added shebang to $file"
+	fi
+done
